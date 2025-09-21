@@ -1,4 +1,4 @@
-FROM openjdk:17-jre-alpine
+FROM openjdk:8-jre-alpine
 
 # Install curl for health checks
 RUN apk add --no-cache curl
