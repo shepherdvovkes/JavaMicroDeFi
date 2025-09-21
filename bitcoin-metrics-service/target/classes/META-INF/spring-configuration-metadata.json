@@ -1,0 +1,90 @@
+{
+  "groups": [
+    {
+      "name": "bitcoin.metrics",
+      "type": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig"
+    },
+    {
+      "name": "bitcoin.metrics.metrics",
+      "type": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$Metrics",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig",
+      "sourceMethod": "getMetrics()"
+    },
+    {
+      "name": "bitcoin.metrics.rpc",
+      "type": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$BitcoinRpc",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig",
+      "sourceMethod": "getRpc()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "bitcoin.metrics.metrics.collection-interval",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$Metrics",
+      "defaultValue": 30000
+    },
+    {
+      "name": "bitcoin.metrics.metrics.enable-blockchain-metrics",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$Metrics",
+      "defaultValue": true
+    },
+    {
+      "name": "bitcoin.metrics.metrics.enable-mempool-metrics",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$Metrics",
+      "defaultValue": true
+    },
+    {
+      "name": "bitcoin.metrics.metrics.enable-network-metrics",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$Metrics",
+      "defaultValue": true
+    },
+    {
+      "name": "bitcoin.metrics.metrics.enable-system-metrics",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$Metrics",
+      "defaultValue": true
+    },
+    {
+      "name": "bitcoin.metrics.rpc.connection-timeout",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$BitcoinRpc",
+      "defaultValue": 10000
+    },
+    {
+      "name": "bitcoin.metrics.rpc.host",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$BitcoinRpc",
+      "defaultValue": "localhost"
+    },
+    {
+      "name": "bitcoin.metrics.rpc.password",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$BitcoinRpc",
+      "defaultValue": "ultrafast_archive_node_2024"
+    },
+    {
+      "name": "bitcoin.metrics.rpc.port",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$BitcoinRpc",
+      "defaultValue": 8332
+    },
+    {
+      "name": "bitcoin.metrics.rpc.timeout",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$BitcoinRpc",
+      "defaultValue": 30000
+    },
+    {
+      "name": "bitcoin.metrics.rpc.username",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.bitcoin.metrics.config.BitcoinMetricsConfig$BitcoinRpc",
+      "defaultValue": "bitcoin"
+    }
+  ],
+  "hints": []
+}

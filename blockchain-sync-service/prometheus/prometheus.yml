@@ -1,0 +1,93 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Blockchain Sync Service metrics
+  - job_name: 'blockchain-sync-service'
+    static_configs:
+      - targets: ['blockchain-sync:9090']
+    scrape_interval: 10s
+    metrics_path: /metrics
+    scrape_timeout: 5s
+
+  # Math Computing Service metrics
+  - job_name: 'math-computing-service'
+    static_configs:
+      - targets: ['math-computing:8083']
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+  # Transaction Signing Service metrics
+  - job_name: 'transaction-signing-service'
+    static_configs:
+      - targets: ['transaction-signing:8082']
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+  # Data Aggregation Service metrics
+  - job_name: 'data-aggregation-service'
+    static_configs:
+      - targets: ['data-aggregation:8084']
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+  # Simple Rust Metrics Service (for testing)
+  - job_name: 'simple-metrics-service'
+    static_configs:
+      - targets: ['172.19.0.8:8080']
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+  # Test metrics service (not accessible from main network)
+  # - job_name: 'test-metrics'
+  #   static_configs:
+  #     - targets: ['test-metrics:8080']
+  #   scrape_interval: 30s
+  #   metrics_path: /metrics
+  #   scrape_timeout: 10s
+
+  # API Gateway Micrometer metrics
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:8080']
+    scrape_interval: 15s
+    metrics_path: /actuator/prometheus
+    scrape_timeout: 10s
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'jvm_.*|http_server_requests.*|gateway_.*|system_.*|process_.*'
+        action: keep
+
+  # Note: Ethereum, Erigon, Lighthouse, MongoDB, and Kafka exporters are not currently deployed
+  # Uncomment and configure these when the respective services are available
+
+  # Bitcoin Metrics Service (via host network)
+  - job_name: 'bitcoin-metrics'
+    static_configs:
+      - targets: ['172.19.0.1:8082']
+    scrape_interval: 15s
+    metrics_path: /bitcoin-metrics/actuator/prometheus
+    scrape_timeout: 10s
+
+  # Bitcoin Node Direct Metrics (if node exporter is available)
+  # Note: Bitcoin node exporter is not currently deployed
+  # - job_name: 'bitcoin-node'
+  #   static_configs:
+  #     - targets: ['bitcoin-full-node:9100']
+  #   scrape_interval: 30s
+  #   metrics_path: /metrics
+  #   scrape_timeout: 10s

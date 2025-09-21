@@ -18,8 +18,8 @@ mod kafka_consumer;
 mod signing_service;
 
 use models::*;
-use crypto::CryptoService;
-use kafka_consumer::KafkaConsumerService;
+// use crypto::CryptoService;
+// use kafka_consumer::KafkaConsumerService;
 use signing_service::TransactionSigningService;
 
 #[derive(Clone)]

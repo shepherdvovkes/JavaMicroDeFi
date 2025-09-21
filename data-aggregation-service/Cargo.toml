@@ -37,3 +37,5 @@ version = "0.5"
 # For statistical calculations
 [dependencies.statrs]
 version = "0.16"
+
+prometheus = "0.13"

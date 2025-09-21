@@ -1,0 +1,4 @@
+com/defimon/aggregation/repository/PriceDataRepository.class
+com/defimon/aggregation/controller/DataController.class
+com/defimon/aggregation/DataAggregationApplication.class
+com/defimon/aggregation/model/PriceData.class

@@ -1,0 +1,61 @@
+# Bitcoin Service Configuration for Java Microservices
+# This configuration can be used in your Java applications to connect to Bitcoin
+
+bitcoin:
+  # Direct RPC connection
+  rpc:
+    host: localhost
+    port: 8332
+    username: bitcoin
+    password: ultrafast_archive_node_2024
+    timeout: 60000
+    connection-timeout: 30000
+    
+  # HTTP Proxy connection (recommended for production)
+  proxy:
+    base-url: http://localhost:8081
+    light-endpoint: /rpc/light
+    heavy-endpoint: /rpc/heavy
+    health-endpoint: /health
+    timeout: 60000
+    connection-timeout: 30000
+    
+  # Network configuration
+  network: mainnet
+  testnet: false
+  
+  # Performance settings
+  performance:
+    max-connections: 32
+    connection-pool-size: 16
+    request-timeout: 60000
+    retry-attempts: 3
+    retry-delay: 1000
+
+# Example Java Configuration Properties
+# Add these to your application.yml or application.properties:
+
+# Bitcoin RPC Configuration
+bitcoin.rpc.host=localhost
+bitcoin.rpc.port=8332
+bitcoin.rpc.username=bitcoin
+bitcoin.rpc.password=ultrafast_archive_node_2024
+bitcoin.rpc.timeout=60000
+bitcoin.rpc.connection-timeout=30000
+
+# Bitcoin Proxy Configuration (alternative)
+bitcoin.proxy.base-url=http://localhost:8081
+bitcoin.proxy.light-endpoint=/rpc/light
+bitcoin.proxy.heavy-endpoint=/rpc/heavy
+bitcoin.proxy.health-endpoint=/health
+
+# Network Settings
+bitcoin.network=mainnet
+bitcoin.testnet=false
+
+# Performance Settings
+bitcoin.performance.max-connections=32
+bitcoin.performance.connection-pool-size=16
+bitcoin.performance.request-timeout=60000
+bitcoin.performance.retry-attempts=3
+bitcoin.performance.retry-delay=1000

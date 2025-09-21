@@ -9,7 +9,6 @@ use std::time::Duration;
 
 use crate::models::{TransactionSigningTask, SigningResult};
 
-#[derive(Clone)]
 pub struct KafkaConsumerService {
     consumer: StreamConsumer,
 }

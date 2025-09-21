@@ -1,0 +1,197 @@
+version: '3.8'
+
+services:
+  # MongoDB for data storage
+  mongodb:
+    image: mongo:7.0
+    container_name: ethereum-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: ethereum_chaindata
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - ethereum-network
+
+  # Zookeeper for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: ethereum-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - ethereum-network
+
+  # Kafka for event streaming
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: ethereum-kafka
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - ethereum-network
+
+  # Kafka UI for monitoring
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: ethereum-kafka-ui
+    restart: unless-stopped
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - ethereum-network
+
+  # MongoDB Express for database management
+  mongo-express:
+    image: mongo-express:1.0.0
+    container_name: ethereum-mongo-express
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password123@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    networks:
+      - ethereum-network
+
+  # Blockchain Sync Service
+  blockchain-sync:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ethereum-blockchain-sync
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - kafka
+    environment:
+      # Ethereum RPC Configuration
+      ETH_RPC_URL: ${ETH_RPC_URL:-https://mainnet.infura.io/v3/YOUR_PROJECT_ID}
+      
+      # Kafka Configuration
+      KAFKA_BROKERS: kafka:9092
+      
+      # MongoDB Configuration
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/ethereum_chaindata?authSource=admin
+      
+      # Service Configuration
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      RUST_LOG: ${RUST_LOG:-info}
+      
+      # Sync Configuration
+      DEFAULT_START_BLOCK: ${DEFAULT_START_BLOCK:-0}
+      DEFAULT_BLOCK_DELAY_MS: ${DEFAULT_BLOCK_DELAY_MS:-100}
+      DEFAULT_BATCH_SIZE: ${DEFAULT_BATCH_SIZE:-100}
+      MAX_RETRIES: ${MAX_RETRIES:-5}
+      RETRY_DELAY_MS: ${RETRY_DELAY_MS:-1000}
+      
+      # Performance Configuration
+      MAX_CONCURRENT_REQUESTS: ${MAX_CONCURRENT_REQUESTS:-10}
+      REQUEST_TIMEOUT_MS: ${REQUEST_TIMEOUT_MS:-30000}
+      CIRCUIT_BREAKER_THRESHOLD: ${CIRCUIT_BREAKER_THRESHOLD:-5}
+      CIRCUIT_BREAKER_TIMEOUT_MS: ${CIRCUIT_BREAKER_TIMEOUT_MS:-60000}
+      
+      # Health Check Configuration
+      HEALTH_CHECK_INTERVAL_MS: ${HEALTH_CHECK_INTERVAL_MS:-30000}
+      STATUS_REPORT_INTERVAL_MS: ${STATUS_REPORT_INTERVAL_MS:-300000}
+      
+      # Data Processing Configuration
+      ENABLE_TOKEN_TRANSFER_DETECTION: ${ENABLE_TOKEN_TRANSFER_DETECTION:-true}
+      ENABLE_DEFI_EVENT_DETECTION: ${ENABLE_DEFI_EVENT_DETECTION:-true}
+      ENABLE_SMART_CONTRACT_ANALYSIS: ${ENABLE_SMART_CONTRACT_ANALYSIS:-true}
+      ENABLE_BALANCE_TRACKING: ${ENABLE_BALANCE_TRACKING:-false}
+      
+      # Monitoring Configuration
+      ENABLE_METRICS: ${ENABLE_METRICS:-true}
+      METRICS_PORT: ${METRICS_PORT:-9090}
+      PROMETHEUS_ENDPOINT: ${PROMETHEUS_ENDPOINT:-/metrics}
+    ports:
+      - "8082:9090"  # Metrics port
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - ethereum-network
+    command: ["./blockchain-sync-service", "sync", "--block-delay-ms", "100"]
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ethereum-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - ethereum-network
+
+  # Test metrics service
+  test-metrics:
+    build:
+      context: ..
+      dockerfile: test-metrics.Dockerfile
+    container_name: test-metrics
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - ethereum-network
+
+
+volumes:
+  mongodb_data:
+    driver: local
+  zookeeper_data:
+    driver: local
+  zookeeper_logs:
+    driver: local
+  kafka_data:
+    driver: local
+  prometheus_data:
+    driver: local
+
+networks:
+  ethereum-network:
+    driver: bridge

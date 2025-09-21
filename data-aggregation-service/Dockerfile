@@ -1,4 +1,12 @@
-FROM rust:1.75 as builder
+FROM rust:1.85 as builder
+
+# Install system dependencies for building
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    cmake \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
 
