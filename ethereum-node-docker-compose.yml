@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  erigon:
+    image: erigontech/erigon:latest
+    container_name: erigon
+    restart: unless-stopped
+    ports:
+      - "8545:8545"   # HTTP JSON-RPC
+      - "8546:8546"   # WebSocket JSON-RPC
+      - "30303:30303" # P2P
+      - "30303:30303/udp" # P2P UDP
+    volumes:
+      - /opt/erigon-hot:/home/erigon/.local/share/erigon
+      - /mnt/lighthouse-data/lighthouse-hot/ethereum/geth/jwtsecret:/home/erigon/jwtsecret:ro
+    command: >
+      --datadir=/home/erigon/.local/share/erigon
+      --prune.mode=archive
+      --http
+      --http.addr=0.0.0.0
+      --http.port=8545
+      --http.api=eth,erigon,web3,net,debug,trace,txpool,parity,ots,admin,personal,engine
+      --http.corsdomain=*
+      --http.vhosts=*
+      --ws
+      --ws.port=8546
+      --private.api.addr=0.0.0.0:9090
+      --authrpc.addr=0.0.0.0
+      --authrpc.port=8551
+      --authrpc.jwtsecret=/home/erigon/jwtsecret
+      --authrpc.vhosts=*
+      --torrent.port=42068
+      --torrent.upload.rate=1024mb
+      --torrent.download.rate=1024mb
+    networks:
+      - ethereum-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-X", "POST", "-H", "Content-Type: application/json", "-d", "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":1}", "http://localhost:8545"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  lighthouse:
+    image: sigp/lighthouse:latest
+    container_name: lighthouse
+    restart: unless-stopped
+    ports:
+      - "9000:9000"   # P2P TCP
+      - "9000:9000/udp" # P2P UDP
+      - "5052:5052"   # HTTP API
+    volumes:
+      - /mnt/lighthouse-data/lighthouse-hot/beacon:/root/.lighthouse/mainnet/beacon
+      - /mnt/lighthouse-data/lighthouse-hot/ethereum/geth/jwtsecret:/root/.lighthouse/jwtsecret:ro
+    environment:
+      - LIGHTHOUSE_NETWORK=mainnet
+      - LIGHTHOUSE_DATA_DIR=/root/.lighthouse/mainnet
+    command: |
+      lighthouse bn
+      --network=mainnet
+      --datadir=/root/.lighthouse/mainnet
+      --execution-endpoint=http://erigon:8551
+      --execution-jwt=/root/.lighthouse/jwtsecret
+      --checkpoint-sync-url=https://mainnet.checkpoint.sigp.io
+      --http
+      --http-address=0.0.0.0
+      --http-port=5052
+      --http-allow-origin=*
+      --metrics
+      --metrics-address=0.0.0.0
+      --metrics-port=5054
+      --validator-monitor-auto
+      --disable-deposit-contract-sync
+    networks:
+      - ethereum-network
+    depends_on:
+      - erigon
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5052/eth/v1/node/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  ethereum-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

@@ -1,0 +1,50 @@
+server:
+  port: 8082
+  servlet:
+    context-path: /bitcoin-metrics
+
+spring:
+  application:
+    name: bitcoin-metrics-service
+  
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 30s
+
+bitcoin:
+  metrics:
+    rpc:
+      host: 172.19.0.1
+      port: 8332
+      username: bitcoin
+      password: ultrafast_archive_node_2024
+      timeout: 30000
+      connection-timeout: 10000
+    metrics:
+      collection-interval: 30000  # 30 seconds
+      enable-blockchain-metrics: true
+      enable-network-metrics: true
+      enable-mempool-metrics: true
+      enable-system-metrics: true
+
+logging:
+  level:
+    com.defimon.bitcoin.metrics: DEBUG
+    org.springframework.web.reactive.function.client: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/bitcoin-metrics.log

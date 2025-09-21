@@ -16,15 +16,18 @@ mod models;
 mod calculations;
 mod kafka_consumer;
 mod math_service;
+mod metrics;
 
 use models::*;
 use calculations::*;
 use kafka_consumer::KafkaConsumerService;
 use math_service::MathComputingService;
+use metrics::{MathComputingMetrics, create_metrics_registry, register_math_metrics};
 
 #[derive(Clone)]
 pub struct AppState {
     math_service: Arc<MathComputingService>,
+    metrics: Arc<MathComputingMetrics>,
 }
 
 #[tokio::main]
@@ -37,9 +40,11 @@ async fn main() -> Result<()> {
         .unwrap_or_else(|_| "localhost:9092".to_string());
 
     let math_service = Arc::new(MathComputingService::new(&kafka_brokers).await?);
+    let metrics = Arc::new(MathComputingMetrics::new());
     
     let app_state = AppState {
         math_service: math_service.clone(),
+        metrics: metrics.clone(),
     };
 
     // Start Kafka consumer in background
@@ -53,6 +58,7 @@ async fn main() -> Result<()> {
     // Create HTTP API routes
     let app = Router::new()
         .route("/health", get(health_check))
+        .route("/metrics", get(metrics_handler))
         .route("/calculate/option-price", post(calculate_option_price_handler))
         .route("/calculate/arbitrage", post(calculate_arbitrage_handler))
         .route("/calculate/portfolio-optimization", post(optimize_portfolio_handler))
@@ -78,6 +84,24 @@ async fn health_check() -> Json<serde_json::Value> {
         "cpu_cores": num_cpus::get(),
         "memory_usage": get_memory_usage()
     }))
+}
+
+async fn metrics_handler(State(state): State<AppState>) -> Result<String, StatusCode> {
+    let registry = create_metrics_registry();
+    if let Err(e) = register_math_metrics(&registry, &state.metrics) {
+        error!("Failed to register metrics: {}", e);
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+    
+    let metric_families = registry.gather();
+    let encoder = prometheus::TextEncoder::new();
+    match encoder.encode_to_string(&metric_families) {
+        Ok(metrics) => Ok(metrics),
+        Err(e) => {
+            error!("Failed to encode metrics: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
 }
 
 async fn calculate_option_price_handler(

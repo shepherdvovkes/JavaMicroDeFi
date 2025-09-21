@@ -3,14 +3,15 @@ use aes_gcm::{
     aead::{Aead, AeadCore, KeyInit, OsRng},
     Aes256Gcm, Nonce,
 };
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier, password_hash::{rand_core::RngCore, SaltString}};
-use ethereum_types::{H256, U256};
-use rand::Rng;
+use argon2::{Argon2, PasswordHasher, password_hash::{rand_core::RngCore, SaltString}};
+use ethereum_types::U256;
+// use rand::Rng;
 use secp256k1::{PublicKey, SecretKey, Secp256k1, Message, All};
 use sha3::{Digest, Keccak256};
 use web3::types::{Address, TransactionParameters};
 use zeroize::Zeroize;
 
+#[derive(Clone)]
 pub struct CryptoService {
     secp: Secp256k1<All>,
 }
@@ -53,7 +54,7 @@ impl CryptoService {
         let encoded = self.encode_transaction(transaction, chain_id)?;
         let hash = self.keccak256(&encoded);
         
-        let message = Message::from_slice(&hash)?;
+        let message = Message::from_digest_slice(&hash)?;
         let signature = self.secp.sign_ecdsa_recoverable(&message, private_key);
         let (recovery_id, signature_bytes) = signature.serialize_compact();
         
@@ -85,10 +86,10 @@ impl CryptoService {
         };
         
         // Value
-        stream.append(&transaction.value.unwrap_or_default());
+        stream.append(&transaction.value);
         
         // Data
-        stream.append(&transaction.data.as_ref().unwrap_or(&vec![]).as_slice());
+        stream.append(&transaction.data.0.as_slice());
         
         // Chain ID, r=0, s=0 for signing
         stream.append(&U256::from(chain_id));
@@ -113,10 +114,12 @@ impl CryptoService {
         
         // Derive key from password using Argon2
         let argon2 = Argon2::default();
-        let password_hash = argon2.hash_password(password.as_bytes(), &salt)?;
+        let password_hash = argon2.hash_password(password.as_bytes(), &salt)
+            .map_err(|e| anyhow::anyhow!("Password hashing failed: {}", e))?;
         
         // Extract the hash bytes for encryption key
-        let key_bytes = password_hash.hash.unwrap().as_bytes();
+        let hash_binding = password_hash.hash.unwrap();
+        let key_bytes = hash_binding.as_bytes();
         let key = &key_bytes[..32]; // Use first 32 bytes as AES-256 key
         
         // Encrypt private key
@@ -124,7 +127,8 @@ impl CryptoService {
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
         
         let private_key_bytes = private_key.secret_bytes();
-        let ciphertext = cipher.encrypt(&nonce, private_key_bytes.as_ref())?;
+        let ciphertext = cipher.encrypt(&nonce, private_key_bytes.as_ref())
+            .map_err(|e| anyhow::anyhow!("Encryption failed: {}", e))?;
         
         // Combine nonce and ciphertext
         let mut encrypted_data = nonce.to_vec();
@@ -138,12 +142,15 @@ impl CryptoService {
 
     pub fn decrypt_private_key(&self, encrypted_data: &str, password: &str, salt: &str) -> Result<SecretKey> {
         // Parse salt
-        let salt = SaltString::new(salt)?;
+        let salt = SaltString::from_b64(salt)
+            .map_err(|e| anyhow::anyhow!("Salt parsing failed: {}", e))?;
         
         // Derive key from password
         let argon2 = Argon2::default();
-        let password_hash = argon2.hash_password(password.as_bytes(), &salt)?;
-        let key_bytes = password_hash.hash.unwrap().as_bytes();
+        let password_hash = argon2.hash_password(password.as_bytes(), &salt)
+            .map_err(|e| anyhow::anyhow!("Password hashing failed: {}", e))?;
+        let hash_binding = password_hash.hash.unwrap();
+        let key_bytes = hash_binding.as_bytes();
         let key = &key_bytes[..32];
         
         // Decrypt private key
@@ -153,7 +160,8 @@ impl CryptoService {
         let cipher = Aes256Gcm::new_from_slice(key)?;
         let nonce = Nonce::from_slice(nonce_bytes);
         
-        let mut decrypted_bytes = cipher.decrypt(nonce, ciphertext)?;
+        let mut decrypted_bytes = cipher.decrypt(nonce, ciphertext)
+            .map_err(|e| anyhow::anyhow!("Decryption failed: {}", e))?;
         let private_key = SecretKey::from_slice(&decrypted_bytes)?;
         
         // Clear decrypted bytes from memory
@@ -170,7 +178,7 @@ impl CryptoService {
         expected_address: &Address,
     ) -> Result<bool> {
         let message_hash = self.keccak256(message);
-        let message = Message::from_slice(&message_hash)?;
+        let message = Message::from_digest_slice(&message_hash)?;
         
         let recovery_id = secp256k1::ecdsa::RecoveryId::from_i32(recovery_id as i32)?;
         let signature = secp256k1::ecdsa::RecoverableSignature::from_compact(&signature, recovery_id)?;

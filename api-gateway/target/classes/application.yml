@@ -44,6 +44,19 @@ management:
   endpoint:
     health:
       show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 15s
+        descriptions: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${spring.profiles.active:default}
 
 logging:
   level:

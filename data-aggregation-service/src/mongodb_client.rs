@@ -1,5 +1,6 @@
 use anyhow::Result;
-use mongodb::{bson::doc, Client, Collection, Database};
+use futures::StreamExt;
+use mongodb::{bson::doc, Client, Collection, Database, options::FindOneOptions};
 use chrono::Utc;
 
 use crate::models::*;
@@ -42,7 +43,7 @@ impl MongoDBService {
             "symbol": symbol
         };
 
-        let options = mongodb::options::FindOptions::builder()
+        let options = mongodb::options::FindOneOptions::builder()
             .sort(doc! { "timestamp": -1 })
             .limit(limit as i64)
             .build();
@@ -50,7 +51,7 @@ impl MongoDBService {
         let mut cursor = collection.find(filter, Some(options)).await?;
         let mut price_data = Vec::new();
 
-        while let Some(data) = cursor.next().await {
+        while let Some(data) = cursor.try_next().await {
             price_data.push(data?);
         }
 
@@ -66,7 +67,7 @@ impl MongoDBService {
             "timeframe": timeframe
         };
 
-        let options = mongodb::options::FindOptions::builder()
+        let options = mongodb::options::FindOneOptions::builder()
             .sort(doc! { "timestamp": -1 })
             .limit(limit as i64)
             .build();
@@ -74,7 +75,7 @@ impl MongoDBService {
         let mut cursor = collection.find(filter, Some(options)).await?;
         let mut ohlcv_data = Vec::new();
 
-        while let Some(data) = cursor.next().await {
+        while let Some(data) = cursor.try_next().await {
             ohlcv_data.push(data?);
         }
 
@@ -91,14 +92,14 @@ impl MongoDBService {
             "timestamp": { "$gte": cutoff_time }
         };
 
-        let options = mongodb::options::FindOptions::builder()
+        let options = mongodb::options::FindOneOptions::builder()
             .sort(doc! { "timestamp": 1 })
             .build();
 
         let mut cursor = collection.find(filter, Some(options)).await?;
         let mut volume_data = Vec::new();
 
-        while let Some(data) = cursor.next().await {
+        while let Some(data) = cursor.try_next().await {
             volume_data.push(data?);
         }
 
@@ -112,7 +113,7 @@ impl MongoDBService {
         
         for symbol in symbols {
             let filter = doc! { "symbol": symbol };
-            let options = mongodb::options::FindOptions::builder()
+            let options = mongodb::options::FindOneOptions::builder()
                 .sort(doc! { "timestamp": -1 })
                 .limit(1)
                 .build();
@@ -134,7 +135,7 @@ impl MongoDBService {
             "timeframe": timeframe
         };
 
-        let options = mongodb::options::FindOptions::builder()
+        let options = mongodb::options::FindOneOptions::builder()
             .sort(doc! { "timestamp": -1 })
             .limit(limit as i64)
             .build();
@@ -142,7 +143,7 @@ impl MongoDBService {
         let mut cursor = collection.find(filter, Some(options)).await?;
         let mut aggregated_data = Vec::new();
 
-        while let Some(data) = cursor.next().await {
+        while let Some(data) = cursor.try_next().await {
             aggregated_data.push(data?);
         }
 
@@ -153,7 +154,7 @@ impl MongoDBService {
     pub async fn update_market_summary(&self, summary: &MarketSummaryResponse) -> Result<()> {
         let collection: Collection<serde_json::Value> = self.database.collection("market_summary");
         
-        let summary_doc = serde_json::to_value(summary)?;
+        let summary_doc = mongodb::bson::to_bson(summary)?;
         let filter = doc! { "_id": "latest" };
         let update = doc! { "$set": summary_doc };
         

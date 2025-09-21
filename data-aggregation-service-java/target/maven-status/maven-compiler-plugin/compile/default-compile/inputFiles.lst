@@ -1,0 +1,4 @@
+/home/vovkes/JavaMicroDeFi/data-aggregation-service-java/src/main/java/com/defimon/aggregation/controller/DataController.java
+/home/vovkes/JavaMicroDeFi/data-aggregation-service-java/src/main/java/com/defimon/aggregation/DataAggregationApplication.java
+/home/vovkes/JavaMicroDeFi/data-aggregation-service-java/src/main/java/com/defimon/aggregation/repository/PriceDataRepository.java
+/home/vovkes/JavaMicroDeFi/data-aggregation-service-java/src/main/java/com/defimon/aggregation/model/PriceData.java

@@ -1,0 +1,13 @@
+META-INF/spring-configuration-metadata.json
+com/defimon/bitcoin/metrics/model/BitcoinNetworkInfo.class
+com/defimon/bitcoin/metrics/config/BitcoinMetricsConfig$Metrics.class
+com/defimon/bitcoin/metrics/model/BitcoinRpcRequest.class
+com/defimon/bitcoin/metrics/BitcoinMetricsApplication.class
+com/defimon/bitcoin/metrics/service/BitcoinMetricsCollector.class
+com/defimon/bitcoin/metrics/config/BitcoinMetricsConfig$BitcoinRpc.class
+com/defimon/bitcoin/metrics/service/BitcoinRpcClient.class
+com/defimon/bitcoin/metrics/config/BitcoinMetricsConfig.class
+com/defimon/bitcoin/metrics/model/BitcoinMempoolInfo.class
+com/defimon/bitcoin/metrics/model/BitcoinBlockchainInfo.class
+com/defimon/bitcoin/metrics/model/BitcoinRpcResponse.class
+com/defimon/bitcoin/metrics/model/BitcoinRpcResponse$BitcoinRpcError.class

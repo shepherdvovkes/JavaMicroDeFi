@@ -55,7 +55,7 @@ services:
     build: ./api-gateway
     container_name: api-gateway
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
@@ -68,10 +68,17 @@ services:
   blockchain-sync:
     build: ./blockchain-sync-service
     container_name: blockchain-sync
+    ports:
+      - "9090:9090"  # Prometheus metrics port
     environment:
       - KAFKA_BROKERS=kafka:29092
       - MONGODB_URI=mongodb://admin:defimon123@mongodb:27017/chaindata?authSource=admin
+      - ETH_RPC_URL=http://host.docker.internal:8545
+      - METRICS_ADDR=0.0.0.0:9090
       - RUST_LOG=info
+      - BLOCKCHAIN_DATA_PATH=/mnt/blockchain-disk
+    volumes:
+      - /mnt/blockchain-disk:/mnt/blockchain-disk:ro
     depends_on:
       - kafka
       - mongodb
@@ -82,6 +89,8 @@ services:
   transaction-signing:
     build: ./transaction-signing-service
     container_name: transaction-signing
+    ports:
+      - "8082:8082"  # API port
     environment:
       - KAFKA_BROKERS=kafka:29092
       - RUST_LOG=info
@@ -94,6 +103,8 @@ services:
   math-computing:
     build: ./math-computing-service
     container_name: math-computing
+    ports:
+      - "8083:8083"  # API port
     environment:
       - KAFKA_BROKERS=kafka:29092
       - RUST_LOG=info
@@ -106,6 +117,8 @@ services:
   data-aggregation:
     build: ./data-aggregation-service
     container_name: data-aggregation
+    ports:
+      - "8084:8084"  # API port
     environment:
       - KAFKA_BROKERS=kafka:29092
       - MONGODB_URI=mongodb://admin:defimon123@mongodb:27017/chaindata?authSource=admin
@@ -116,8 +129,57 @@ services:
     networks:
       - defimon-network
 
+  # Simple Rust Metrics Service (for testing)
+  simple-metrics:
+    build: ./simple-rust-metrics-service
+    container_name: simple-metrics
+    ports:
+      - "8090:8080"  # API port
+    networks:
+      - defimon-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./blockchain-sync-service/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - defimon-network
+
+  # Grafana for metrics visualization
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=defimon123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./blockchain-sync-service/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./blockchain-sync-service/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - defimon-network
+
 volumes:
   mongodb_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   defimon-network:

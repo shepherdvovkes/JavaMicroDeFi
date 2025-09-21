@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  bitcoin-core:
+    image: bitcoin/bitcoin:latest
+    container_name: bitcoin-full-node
+    restart: unless-stopped
+    ports:
+      - "8332:8332"  # Mainnet RPC port
+      - "8333:8333"  # Mainnet P2P port
+    volumes:
+      - /mnt/bitcoin/data:/home/bitcoin/.bitcoin
+      - /mnt/bitcoin/bitcoin.conf:/home/bitcoin/.bitcoin/bitcoin.conf
+    environment:
+      - BITCOIN_NETWORK=mainnet
+    command: >
+      bitcoind
+      -conf=/home/bitcoin/.bitcoin/bitcoin.conf
+      -datadir=/home/bitcoin/.bitcoin
+      -printtoconsole=1
+    networks:
+      - defi-network
+    healthcheck:
+      test: ["CMD", "bitcoin-cli", "-conf=/home/bitcoin/.bitcoin/bitcoin.conf", "getblockchaininfo"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+
+networks:
+  defi-network:
+    external: true
+    name: javamicrodefi_default

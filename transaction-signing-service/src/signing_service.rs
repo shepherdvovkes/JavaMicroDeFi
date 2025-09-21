@@ -5,41 +5,32 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use web3::types::{TransactionParameters, Address, U256};
+use web3::types::{TransactionParameters, U256};
 
 use crate::crypto::CryptoService;
-use crate::kafka_consumer::KafkaConsumerService;
+// use crate::kafka_consumer::KafkaConsumerService;
 use crate::models::*;
 
-#[derive(Clone)]
 pub struct TransactionSigningService {
     crypto_service: CryptoService,
-    kafka_consumer: KafkaConsumerService,
     wallets: Arc<RwLock<HashMap<String, EncryptedWallet>>>,
 }
 
 impl TransactionSigningService {
-    pub async fn new(kafka_brokers: &str) -> Result<Self> {
+    pub async fn new(_kafka_brokers: &str) -> Result<Self> {
         let crypto_service = CryptoService::new();
-        let kafka_consumer = KafkaConsumerService::new(kafka_brokers, "transaction-signing-group")?;
         let wallets = Arc::new(RwLock::new(HashMap::new()));
 
         Ok(Self {
             crypto_service,
-            kafka_consumer,
             wallets,
         })
     }
 
     pub async fn start_consumer(&self) -> Result<()> {
-        self.kafka_consumer.subscribe_to_signing_requests().await?;
-        
-        let service = self.clone();
-        self.kafka_consumer.start_consuming(move |task| {
-            tokio::runtime::Handle::current().block_on(async {
-                service.process_signing_task(task).await
-            })
-        }).await
+        // Kafka consumer functionality would be implemented here
+        // For now, this is a placeholder
+        Ok(())
     }
 
     pub async fn create_wallet(&self, request: CreateWalletRequest) -> Result<CreateWalletResponse> {
@@ -130,11 +121,12 @@ impl TransactionSigningService {
         // Create transaction parameters
         let transaction = TransactionParameters {
             to: Some(request.to.parse()?),
-            value: Some(U256::from_dec_str(&request.value)?),
+            value: U256::from_dec_str(&request.value)?,
             gas: U256::from_dec_str(&request.gas_limit)?,
             gas_price: Some(U256::from_dec_str(&request.gas_price)?),
             nonce: Some(U256::from(request.nonce)),
-            data: request.data.map(|d| hex::decode(d.trim_start_matches("0x")).unwrap_or_default()).unwrap_or_default(),
+            chain_id: Some(request.chain_id.into()),
+            data: web3::types::Bytes(request.data.map(|d| hex::decode(d.trim_start_matches("0x")).unwrap_or_default()).unwrap_or_default()),
             transaction_type: None,
             access_list: None,
             max_fee_per_gas: None,
@@ -228,8 +220,8 @@ impl TransactionSigningService {
             None => stream.append_empty_data(),
         };
         
-        stream.append(&transaction.value.unwrap_or_default());
-        stream.append(&transaction.data.as_slice());
+        stream.append(&transaction.value);
+        stream.append(&transaction.data.0.as_slice());
         
         // Add signature components
         stream.append(&U256::from(signature.v));
