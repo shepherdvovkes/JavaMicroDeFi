@@ -1,0 +1,396 @@
+{
+  "groups": [
+    {
+      "name": "linea",
+      "type": "com.defimon.linea.config.LineaConfiguration",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration"
+    }
+  ],
+  "properties": [
+    {
+      "name": "linea.account-collection-interval",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 5000
+    },
+    {
+      "name": "linea.api-host",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "0.0.0.0"
+    },
+    {
+      "name": "linea.api-port",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 8008
+    },
+    {
+      "name": "linea.archive-batch-size",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 1000
+    },
+    {
+      "name": "linea.archive-compression-level",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 6
+    },
+    {
+      "name": "linea.archive-concurrent-workers",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 10
+    },
+    {
+      "name": "linea.archive-database-path",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "\/mnt\/sata18tb\/linea_archive_data.db"
+    },
+    {
+      "name": "linea.archive-database-url",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "jdbc:sqlite:\/mnt\/sata18tb\/linea_archive_data.db"
+    },
+    {
+      "name": "linea.archive-max-retries",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 3
+    },
+    {
+      "name": "linea.archive-mode",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "full"
+    },
+    {
+      "name": "linea.archive-retry-delay",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 5000
+    },
+    {
+      "name": "linea.archive-start-block",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 0
+    },
+    {
+      "name": "linea.backup-interval-hours",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 6
+    },
+    {
+      "name": "linea.backup-path",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "\/mnt\/sata18tb\/linea_backups\/"
+    },
+    {
+      "name": "linea.backup-retention-days",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 30
+    },
+    {
+      "name": "linea.block-collection-interval",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 2000
+    },
+    {
+      "name": "linea.block-time",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 2000
+    },
+    {
+      "name": "linea.bridge-contract",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "0xA0b86a33E6441E0a4bFc0B4d5F3F3E5A4F3F3F3F"
+    },
+    {
+      "name": "linea.bridge-contracts",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration"
+    },
+    {
+      "name": "linea.chain-id",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "59144"
+    },
+    {
+      "name": "linea.compress-archive-data",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": true
+    },
+    {
+      "name": "linea.connection-timeout",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 30
+    },
+    {
+      "name": "linea.contract-collection-interval",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 10000
+    },
+    {
+      "name": "linea.database-path",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "\/mnt\/sata18tb\/linea_data.db"
+    },
+    {
+      "name": "linea.database-url",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "jdbc:sqlite:\/mnt\/sata18tb\/linea_data.db"
+    },
+    {
+      "name": "linea.defi-collection-interval",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 30000
+    },
+    {
+      "name": "linea.defi-protocols",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration"
+    },
+    {
+      "name": "linea.enable-backup",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": true
+    },
+    {
+      "name": "linea.enable-bridge-metrics",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": true
+    },
+    {
+      "name": "linea.enable-contract-metrics",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": true
+    },
+    {
+      "name": "linea.enable-data-validation",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": true
+    },
+    {
+      "name": "linea.enable-defi-metrics",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": true
+    },
+    {
+      "name": "linea.enable-historical-data",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": true
+    },
+    {
+      "name": "linea.enable-quality-checks",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": true
+    },
+    {
+      "name": "linea.enable-real-time-monitoring",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": true
+    },
+    {
+      "name": "linea.enable-token-metrics",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": true
+    },
+    {
+      "name": "linea.explorer-url",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "https:\/\/lineascan.build"
+    },
+    {
+      "name": "linea.known-bridge-contracts",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration"
+    },
+    {
+      "name": "linea.known-defi-protocols",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration"
+    },
+    {
+      "name": "linea.log-file",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "\/mnt\/sata18tb\/logs\/linea_collector.log"
+    },
+    {
+      "name": "linea.log-level",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "INFO"
+    },
+    {
+      "name": "linea.log-retention-days",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 30
+    },
+    {
+      "name": "linea.max-block-gap",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 10
+    },
+    {
+      "name": "linea.max-block-size",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 30000000
+    },
+    {
+      "name": "linea.max-concurrent-requests",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 100
+    },
+    {
+      "name": "linea.max-concurrent-workers",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 10
+    },
+    {
+      "name": "linea.max-transaction-count",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 10000
+    },
+    {
+      "name": "linea.message-service",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "0xd19bae9c65bde34f26c2ee8f2f3f3e5a4f3f3f3f"
+    },
+    {
+      "name": "linea.min-block-size",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 1000
+    },
+    {
+      "name": "linea.min-transaction-count",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 1
+    },
+    {
+      "name": "linea.native-token",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "ETH"
+    },
+    {
+      "name": "linea.network-name",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "linea"
+    },
+    {
+      "name": "linea.node-env",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "production"
+    },
+    {
+      "name": "linea.rate-limit-per-second",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 100
+    },
+    {
+      "name": "linea.request-timeout-seconds",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 30
+    },
+    {
+      "name": "linea.response-timeout",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 30
+    },
+    {
+      "name": "linea.retry-attempts",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 3
+    },
+    {
+      "name": "linea.retry-delay-seconds",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 5
+    },
+    {
+      "name": "linea.rpc-url",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration"
+    },
+    {
+      "name": "linea.token-collection-interval",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 15000
+    },
+    {
+      "name": "linea.transaction-collection-interval",
+      "type": "java.lang.Long",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 1000
+    },
+    {
+      "name": "linea.working-dir",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "\/mnt\/sata18tb"
+    },
+    {
+      "name": "linea.wrapped-token",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": "WETH"
+    },
+    {
+      "name": "linea.wss-rate-limit-per-second",
+      "type": "java.lang.Integer",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration",
+      "defaultValue": 50
+    },
+    {
+      "name": "linea.wss-url",
+      "type": "java.lang.String",
+      "sourceType": "com.defimon.linea.config.LineaConfiguration"
+    }
+  ],
+  "hints": []
+}

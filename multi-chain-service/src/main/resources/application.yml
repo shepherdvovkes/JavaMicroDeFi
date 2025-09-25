@@ -1,0 +1,239 @@
+# Multi-Chain Service Configuration
+# Java 21 + Spring Boot 3.2 + Plugin Architecture
+
+server:
+  port: 8085
+  servlet:
+    context-path: /multichain
+  threads:
+    virtual:
+      enabled: true
+
+spring:
+  application:
+    name: multi-chain-service
+  
+  # Virtual Threads Configuration
+  threads:
+    virtual:
+      enabled: true
+      name-prefix: "multichain-vt-"
+  
+  # Data Sources
+  data:
+    mongodb:
+      uri: mongodb://admin:defimon123@localhost:27017/multichain?authSource=admin
+      auto-index-creation: true
+      
+    redis:
+      host: localhost
+      port: 6379
+      password: defimon123
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      batch-size: 16384
+      linger-ms: 5
+      buffer-memory: 33554432
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: multichain-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: "com.defimon.multichain.model"
+  
+  # WebFlux Configuration
+  webflux:
+    base-path: /api/v1
+
+# Multi-Chain Plugin Configuration
+multichain:
+  plugins:
+    ethereum:
+      enabled: true
+      chain-id: "1"
+      chain-name: "Ethereum"
+      rpc-url: "https://mainnet.infura.io/v3/${INFURA_PROJECT_ID:your-infura-key}"
+      block-time: 12000
+      sync-strategy: "realtime"
+      technology: "rust-java-hybrid"
+      max-retries: 3
+      retry-delay: 1000
+      connection-timeout: 30000
+      read-timeout: 60000
+      
+      # Ethereum-specific settings
+      infura-project-id: ${INFURA_PROJECT_ID:}
+      alchemy-api-key: ${ALCHEMY_API_KEY:}
+      enable-smart-contract-support: true
+      enable-event-filtering: true
+      max-concurrent-requests: 100
+      request-timeout: 30000
+      enable-gas-optimization: true
+      gas-price-multiplier: 1.1
+      max-retries-per-request: 3
+      retry-delay-ms: 1000
+      enable-metrics: true
+      rust-sync-engine-url: "${ETHEREUM_RUST_ENGINE_URL:http://localhost:8086}"
+      enable-rust-sync-engine: true
+      communication-method: "http"  # http, kafka, hybrid
+      
+    bitcoin:
+      enabled: true
+      chain-id: "bitcoin"
+      chain-name: "Bitcoin"
+      rpc-url: "http://localhost:8332"
+      block-time: 600000
+      sync-strategy: "batch"
+      technology: "java21"
+      max-retries: 3
+      retry-delay: 1000
+      connection-timeout: 30000
+      read-timeout: 60000
+      
+      # Bitcoin-specific settings
+      rpc-username: ${BITCOIN_RPC_USERNAME:defimon}
+      rpc-password: ${BITCOIN_RPC_PASSWORD:defimon123}
+      network: "mainnet"
+      enable-zmq: false
+      zmq-address: "tcp://127.0.0.1:28332"
+      enable-utxo-indexing: true
+      max-utxos-per-address: 1000
+      enable-fee-estimation: true
+      fee-estimation-blocks: 6
+      enable-mempool-monitoring: true
+      mempool-max-size: 10000
+      enable-address-indexing: true
+      address-index-max-size: 100000
+      enable-block-filtering: false
+      block-filter-type: "basic"
+      enable-compact-blocks: true
+      compact-blocks-max-size: 1000
+      enable-peer-discovery: false
+      max-peers: 8
+      enable-metrics: true
+      batch-size: 100
+      batch-timeout: 5000
+      
+    polygon:
+      enabled: true
+      chain-id: "137"
+      chain-name: "Polygon"
+      rpc-url: "https://polygon-rpc.com"
+      block-time: 2000
+      sync-strategy: "realtime"
+      technology: "java21"
+      max-retries: 3
+      retry-delay: 1000
+      connection-timeout: 30000
+      read-timeout: 60000
+      
+      # Polygon-specific settings (EVM-compatible)
+      infura-project-id: ${POLYGON_INFURA_PROJECT_ID:}
+      alchemy-api-key: ${POLYGON_ALCHEMY_API_KEY:}
+      enable-smart-contract-support: true
+      enable-event-filtering: true
+      max-concurrent-requests: 100
+      request-timeout: 30000
+      enable-gas-optimization: true
+      gas-price-multiplier: 1.05
+      max-retries-per-request: 3
+      retry-delay-ms: 1000
+      enable-metrics: true
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,plugins
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        http.client.requests: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${ENVIRONMENT:development}
+
+# Logging Configuration
+logging:
+  level:
+    com.defimon.multichain: INFO
+    org.springframework.web: INFO
+    org.springframework.kafka: INFO
+    org.springframework.data.mongodb: INFO
+    reactor.netty: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+  file:
+    name: logs/multichain-service.log
+
+# Profile-specific configurations
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  data:
+    mongodb:
+      uri: mongodb://admin:defimon123@mongodb:27017/multichain?authSource=admin
+    redis:
+      host: redis
+  kafka:
+    bootstrap-servers: kafka:29092
+
+multichain:
+  plugins:
+    ethereum:
+      rpc-url: "https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}"
+    bitcoin:
+      rpc-url: "http://bitcoin-node:8332"
+    polygon:
+      rpc-url: "https://polygon-rpc.com"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: production
+
+logging:
+  level:
+    com.defimon.multichain: WARN
+    org.springframework: WARN
+  file:
+    name: /var/log/multichain-service.log
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus

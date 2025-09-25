@@ -1,0 +1,156 @@
+groups:
+  - name: linea-microservice-alerts
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: rate(linea_rpc_errors_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High RPC error rate detected"
+          description: "Linea microservice has {{ $value }} RPC errors per second"
+
+      # Service down alert
+      - alert: ServiceDown
+        expr: up{job="linea-microservice"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Linea microservice is down"
+          description: "Linea microservice has been down for more than 1 minute"
+
+      # High memory usage alert
+      - alert: HighMemoryUsage
+        expr: linea_system_memory_usage_bytes / 1024 / 1024 / 1024 > 4
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Linea microservice is using {{ $value }}GB of memory"
+
+      # High CPU usage alert
+      - alert: HighCPUUsage
+        expr: linea_system_cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "Linea microservice CPU usage is {{ $value }}%"
+
+      # Database connection issues
+      - alert: DatabaseConnectionIssues
+        expr: linea_database_errors_total > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection issues detected"
+          description: "Linea microservice has {{ $value }} database errors"
+
+      # Sync progress stalled
+      - alert: SyncProgressStalled
+        expr: increase(linea_network_sync_progress_percent[10m]) == 0 and linea_network_sync_progress_percent < 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sync progress has stalled"
+          description: "Linea sync progress has not increased in the last 10 minutes"
+
+      # Low TPS alert
+      - alert: LowTPS
+        expr: linea_network_tps < 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low transaction throughput"
+          description: "Linea network TPS is {{ $value }}, which is below normal levels"
+
+      # High response time alert
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(linea_rpc_request_duration_seconds_bucket[5m])) > 5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High RPC response time"
+          description: "95th percentile RPC response time is {{ $value }} seconds"
+
+  - name: linea-database-alerts
+    rules:
+      # MongoDB connection issues
+      - alert: MongoDBConnectionIssues
+        expr: up{job="mongodb"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MongoDB is down"
+          description: "MongoDB database is not responding"
+
+      # TimescaleDB connection issues
+      - alert: TimescaleDBConnectionIssues
+        expr: up{job="timescaledb"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "TimescaleDB is down"
+          description: "TimescaleDB database is not responding"
+
+      # Redis connection issues
+      - alert: RedisConnectionIssues
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache is not responding"
+
+      # MySQL connection issues
+      - alert: MySQLConnectionIssues
+        expr: up{job="mysql"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL is down"
+          description: "MySQL database is not responding"
+
+  - name: linea-system-alerts
+    rules:
+      # Disk space low
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space is running low"
+          description: "Disk space usage is {{ $value }}%"
+
+      # Container restart
+      - alert: ContainerRestart
+        expr: increase(container_restart_count[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container has restarted"
+          description: "Container {{ $labels.name }} has restarted {{ $value }} times"
+
+      # High container memory usage
+      - alert: HighContainerMemoryUsage
+        expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High container memory usage"
+          description: "Container {{ $labels.name }} is using {{ $value }}% of its memory limit"

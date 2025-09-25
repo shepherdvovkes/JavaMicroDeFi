@@ -1,0 +1,144 @@
+version: '3.8'
+
+services:
+  erigon:
+    image: erigontech/erigon:latest
+    container_name: erigon-archive-node
+    restart: unless-stopped
+    ports:
+      - "30303:30303"     # P2P port
+      - "8545:8545"       # HTTP RPC
+      - "8546:8546"       # WebSocket RPC  
+      - "8551:8551"       # Engine API (for consensus layer)
+      - "9093:9090"       # gRPC
+      - "6060:6060"       # Metrics
+    volumes:
+      - /mnt/sata18tb/erigon-hot:/home/erigon/.local/share/erigon
+      - /mnt/sata18tb/erigon_snapshots:/home/erigon/.local/share/erigon/snapshots
+      - ./erigon-config:/config
+    command: [
+      "--datadir=/home/erigon/.local/share/erigon",
+      "--chain=mainnet",
+      "--prune.mode=archive",
+      "--http",
+      "--http.addr=0.0.0.0",
+      "--http.port=8545",
+      "--http.api=eth,debug,net,trace,web3,erigon",
+      "--http.vhosts=*",
+      "--http.corsdomain=*",
+      "--ws",
+      "--ws.port=8546",
+      "--authrpc.addr=0.0.0.0",
+      "--authrpc.port=8551",
+      "--authrpc.vhosts=*",
+      "--authrpc.jwtsecret=/config/jwt.hex",
+      "--metrics",
+      "--metrics.addr=0.0.0.0",
+      "--metrics.port=6060",
+      "--maxpeers=100",
+      "--torrent.download.rate=16mb",
+      "--torrent.upload.rate=4mb"
+    ]
+    environment:
+      - ERIGON_USER=erigon
+    networks:
+      - ethereum-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8545 -X POST -H 'Content-Type: application/json' --data '{\"jsonrpc\":\"2.0\",\"method\":\"eth_syncing\",\"params\":[],\"id\":1}' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  lighthouse:
+    image: sigp/lighthouse:v5.2.1
+    container_name: lighthouse-consensus-node
+    restart: unless-stopped
+    ports:
+      - "9000:9000/tcp"   # P2P TCP
+      - "9000:9000/udp"   # P2P UDP
+      - "5052:5052"       # HTTP API
+      - "5054:5054"       # Metrics
+    volumes:
+      - /mnt/sata18tb/lighthouse-data:/opt/app/beacon
+      - ./lighthouse-config:/config
+      - ./erigon-config:/erigon-config:ro
+    command: [
+      "lighthouse",
+      "bn",
+      "--network", "mainnet",
+      "--datadir", "/opt/app/beacon",
+      "--http",
+      "--http-address", "0.0.0.0",
+      "--http-port", "5052",
+      "--http-allow-origin", "*",
+      "--execution-endpoint", "http://erigon:8551",
+      "--execution-jwt", "/erigon-config/jwt.hex",
+      "--checkpoint-sync-url", "https://mainnet.checkpoint.sigp.io",
+      "--reconstruct-historic-states",
+      "--metrics",
+      "--metrics-address", "0.0.0.0",
+      "--metrics-port", "5054",
+      "--metrics-allow-origin", "*",
+      "--disable-upnp",
+      "--enr-udp-port", "9000",
+      "--enr-tcp-port", "9000",
+      "--port", "9000",
+      "--discovery-port", "9000",
+      "--target-peers", "50",
+      "--max-skip-slots", "1000",
+      "--import-all-attestations"
+    ]
+    depends_on:
+      - erigon
+    networks:
+      - ethereum-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5052/eth/v1/node/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: ethereum-prometheus
+    restart: unless-stopped
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - ethereum-net
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: ethereum-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - ethereum-net
+
+networks:
+  ethereum-net:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:

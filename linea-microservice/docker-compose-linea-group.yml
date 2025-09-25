@@ -1,0 +1,356 @@
+version: '3.8'
+
+# Linea Container Group - Complete Blockchain Data Collection Stack
+# This compose file creates a comprehensive Linea microservice deployment
+# with all necessary services for blockchain data collection and monitoring
+
+networks:
+  linea-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  linea-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/sata18tb
+  mongodb-data:
+    driver: local
+  timescaledb-data:
+    driver: local
+  redis-data:
+    driver: local
+  mysql-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+services:
+  # Linea Microservice - Main Application
+  linea-microservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: linea-microservice
+    hostname: linea-microservice
+    ports:
+      - "8008:8008"
+    volumes:
+      - linea-data:/mnt/sata18tb
+      - ./logs:/app/logs
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - JAVA_OPTS=--enable-preview -XX:+UseZGC -XX:+UnlockExperimentalVMOptions -XX:+UseTransparentHugePages -Xmx4g -Xms2g
+      - LINEA_RPC_URL=https://dry-special-card.linea-mainnet.quiknode.pro/your_quicknode_linea_key_here/
+      - LINEA_DATABASE_PATH=/mnt/sata18tb/linea_data.db
+      - LINEA_ARCHIVE_DATABASE_PATH=/mnt/sata18tb/linea_archive_data.db
+      - LINEA_MAX_CONCURRENT_WORKERS=20
+      - LINEA_RATE_LIMIT_PER_SECOND=200
+      - MONGODB_URI=mongodb://mongodb:27017/linea_blockchain
+      - TIMESCALEDB_URL=jdbc:postgresql://timescaledb:5432/linea_metrics
+      - TIMESCALEDB_USERNAME=linea_user
+      - TIMESCALEDB_PASSWORD=linea_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MYSQL_URL=jdbc:mysql://mysql:3306/linea_config
+      - MYSQL_USERNAME=linea_user
+      - MYSQL_PASSWORD=linea_password
+    depends_on:
+      - mongodb
+      - timescaledb
+      - redis
+      - mysql
+    networks:
+      - linea-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8008/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          cpus: '4.0'
+        reservations:
+          memory: 2G
+          cpus: '2.0'
+
+  # MongoDB - Primary Database for Blockchain Data
+  mongodb:
+    image: mongo:7.0
+    container_name: linea-mongodb
+    hostname: mongodb
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb-data:/data/db
+      - ./mongodb/init:/docker-entrypoint-initdb.d
+    environment:
+      - MONGO_INITDB_DATABASE=linea_blockchain
+    networks:
+      - linea-network
+    restart: unless-stopped
+    command: mongod --wiredTigerCacheSizeGB 2 --maxConns 1000
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+
+  # TimescaleDB - Time-Series Database for Metrics
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: linea-timescaledb
+    hostname: timescaledb
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescaledb-data:/var/lib/postgresql/data
+      - ./timescaledb/init:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=linea_metrics
+      - POSTGRES_USER=linea_user
+      - POSTGRES_PASSWORD=linea_password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    networks:
+      - linea-network
+    restart: unless-stopped
+    command: postgres -c shared_preload_libraries=timescaledb -c max_connections=200 -c shared_buffers=1GB -c effective_cache_size=3GB
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+
+  # Redis - In-Memory Cache and Session Store
+  redis:
+    image: redis:7.2-alpine
+    container_name: linea-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - linea-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  # MySQL - Configuration and Metadata Database
+  mysql:
+    image: mysql:8.0
+    container_name: linea-mysql
+    hostname: mysql
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=linea_config
+      - MYSQL_USER=linea_user
+      - MYSQL_PASSWORD=linea_password
+    networks:
+      - linea-network
+    restart: unless-stopped
+    command: --innodb-buffer-pool-size=1G --max-connections=200
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: linea-prometheus
+    hostname: prometheus
+    ports:
+      - "9093:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules:/etc/prometheus/rules
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - linea-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  # Grafana - Metrics Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: linea-grafana
+    hostname: grafana
+    ports:
+      - "3002:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    networks:
+      - linea-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # MongoDB Express - Database Management UI
+  mongo-express:
+    image: mongo-express:latest
+    container_name: linea-mongo-express
+    hostname: mongo-express
+    ports:
+      - "8085:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=admin_password
+      - ME_CONFIG_MONGODB_URL=mongodb://admin:admin_password@mongodb:27017/
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+    networks:
+      - linea-network
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+
+  # pgAdmin - PostgreSQL Management UI
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: linea-pgadmin
+    hostname: pgadmin
+    ports:
+      - "8082:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@linea.local
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json
+    networks:
+      - linea-network
+    restart: unless-stopped
+    depends_on:
+      - timescaledb
+
+  # Redis Commander - Redis Management UI
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: linea-redis-commander
+    hostname: redis-commander
+    ports:
+      - "8083:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    networks:
+      - linea-network
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  # Node Exporter - System Metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: linea-node-exporter
+    hostname: node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - linea-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+
+  # cAdvisor - Container Metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: linea-cadvisor
+    hostname: cadvisor
+    ports:
+      - "8084:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    networks:
+      - linea-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'

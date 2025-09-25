@@ -1,0 +1,159 @@
+server:
+  port: 8088
+  servlet:
+    context-path: /cache
+
+spring:
+  application:
+    name: ssd-cache-service
+  
+  profiles:
+    active: dev
+  
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:defimon123}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+          max-wait: 2000ms
+  
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000 # 1 hour
+      cache-null-values: false
+      enable-statistics: true
+
+# SSD Cache Configuration
+cache:
+  ssd:
+    enabled: ${SSD_CACHE_ENABLED:true}
+    size: ${SSD_CACHE_SIZE:1073741824} # 1GB
+    path: ${SSD_CACHE_PATH:/tmp/ssd-cache}
+    compression: ${SSD_CACHE_COMPRESSION:true}
+    encryption: ${SSD_CACHE_ENCRYPTION:false}
+  
+  memory:
+    size: ${MEMORY_CACHE_SIZE:134217728} # 128MB
+    max-entries: ${MEMORY_CACHE_MAX_ENTRIES:10000}
+  
+  ttl:
+    hot: ${CACHE_TTL_HOT:60} # 1 minute
+    warm: ${CACHE_TTL_WARM:3600} # 1 hour
+    cold: ${CACHE_TTL_COLD:86400} # 24 hours
+  
+  eviction:
+    strategy: ${CACHE_EVICTION_STRATEGY:LRU} # LRU, LFU, TTL, SIZE
+    memory:
+      threshold: ${CACHE_EVICTION_MEMORY_THRESHOLD:0.8}
+      policy: ${CACHE_EVICTION_MEMORY_POLICY:LRU}
+    ssd:
+      threshold: ${CACHE_EVICTION_SSD_THRESHOLD:0.9}
+      policy: ${CACHE_EVICTION_SSD_POLICY:LRU}
+  
+  optimization:
+    enabled: ${CACHE_OPTIMIZATION_ENABLED:true}
+    interval: ${CACHE_OPTIMIZATION_INTERVAL:300} # 5 minutes
+    auto-eviction: ${CACHE_AUTO_EVICTION:true}
+    metrics-retention: ${CACHE_METRICS_RETENTION:86400} # 24 hours
+
+# Performance Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,cache
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      service: ssd-cache-service
+      tier: cache
+
+# Logging Configuration
+logging:
+  level:
+    com.defimon.cache: ${LOG_LEVEL_CACHE:INFO}
+    org.springframework.cache: ${LOG_LEVEL_SPRING_CACHE:DEBUG}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/ssd-cache-service.log
+    max-size: 100MB
+    max-history: 30
+
+# External Service Integration
+external-services:
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://admin:defimon123@localhost:27017/cache_metrics?authSource=admin}
+    database: ${MONGODB_DATABASE:cache_metrics}
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    topics:
+      cache-events: cache-events
+      cache-metrics: cache-metrics
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: ssd-cache-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+# Blockchain Integration
+blockchain:
+  ethereum:
+    enabled: ${BLOCKCHAIN_ETHEREUM_ENABLED:true}
+    cache-blocks: ${BLOCKCHAIN_ETHEREUM_CACHE_BLOCKS:true}
+    cache-transactions: ${BLOCKCHAIN_ETHEREUM_CACHE_TRANSACTIONS:true}
+    block-cache-size: ${BLOCKCHAIN_ETHEREUM_BLOCK_CACHE_SIZE:1000}
+    transaction-cache-size: ${BLOCKCHAIN_ETHEREUM_TRANSACTION_CACHE_SIZE:10000}
+  
+  bitcoin:
+    enabled: ${BLOCKCHAIN_BITCOIN_ENABLED:true}
+    cache-blocks: ${BLOCKCHAIN_BITCOIN_CACHE_BLOCKS:true}
+    cache-transactions: ${BLOCKCHAIN_BITCOIN_CACHE_TRANSACTIONS:true}
+    block-cache-size: ${BLOCKCHAIN_BITCOIN_BLOCK_CACHE_SIZE:1000}
+    transaction-cache-size: ${BLOCKCHAIN_BITCOIN_TRANSACTION_CACHE_SIZE:10000}
+
+# Data Aggregation Cache
+data-aggregation:
+  enabled: ${DATA_AGGREGATION_CACHE_ENABLED:true}
+  price-data:
+    cache-size: ${DATA_AGGREGATION_PRICE_CACHE_SIZE:10000}
+    ttl: ${DATA_AGGREGATION_PRICE_TTL:300} # 5 minutes
+  ohlcv-data:
+    cache-size: ${DATA_AGGREGATION_OHLCV_CACHE_SIZE:5000}
+    ttl: ${DATA_AGGREGATION_OHLCV_TTL:3600} # 1 hour
+  market-data:
+    cache-size: ${DATA_AGGREGATION_MARKET_CACHE_SIZE:20000}
+    ttl: ${DATA_AGGREGATION_MARKET_TTL:60} # 1 minute
+
+# Microservice Integration
+microservices:
+  api-gateway:
+    cache-enabled: ${API_GATEWAY_CACHE_ENABLED:true}
+    response-cache-ttl: ${API_GATEWAY_RESPONSE_CACHE_TTL:300} # 5 minutes
+  
+  ethereum-prediction:
+    cache-enabled: ${ETHEREUM_PREDICTION_CACHE_ENABLED:true}
+    model-cache-ttl: ${ETHEREUM_PREDICTION_MODEL_CACHE_TTL:3600} # 1 hour
+    data-cache-ttl: ${ETHEREUM_PREDICTION_DATA_CACHE_TTL:300} # 5 minutes
+  
+  multi-chain:
+    cache-enabled: ${MULTI_CHAIN_CACHE_ENABLED:true}
+    chain-data-cache-ttl: ${MULTI_CHAIN_DATA_CACHE_TTL:1800} # 30 minutes
+    rpc-response-cache-ttl: ${MULTI_CHAIN_RPC_CACHE_TTL:60} # 1 minute
+

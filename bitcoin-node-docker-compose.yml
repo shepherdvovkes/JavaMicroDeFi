@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  bitcoin-core:
+    image: bitcoin/bitcoin:latest
+    container_name: bitcoin-full-node
+    restart: unless-stopped
+    ports:
+      - "8332:8332"  # Mainnet RPC port
+      - "8333:8333"  # Mainnet P2P port
+      - "18332:18332" # Testnet RPC port
+      - "18333:18333" # Testnet P2P port
+      - "38332:38332" # Signet RPC port
+      - "38333:38333" # Signet P2P port
+    volumes:
+      - /mnt/bitcoin/data:/home/bitcoin/.bitcoin
+      - /mnt/bitcoin/bitcoin.conf:/home/bitcoin/.bitcoin/bitcoin.conf
+      - /mnt/bitcoin/logs:/home/bitcoin/logs
+    environment:
+      - BITCOIN_NETWORK=mainnet
+      - BITCOIN_DATA=/home/bitcoin/.bitcoin
+    command: >
+      bitcoind
+      -conf=/home/bitcoin/.bitcoin/bitcoin.conf
+      -datadir=/home/bitcoin/.bitcoin
+      -printtoconsole=1
+      -debug=1
+      -logtimestamps=1
+    networks:
+      - defi-network
+    healthcheck:
+      test: ["CMD", "bitcoin-cli", "-conf=/home/bitcoin/.bitcoin/bitcoin.conf", "getblockchaininfo"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: '4.0'
+        reservations:
+          memory: 4G
+          cpus: '1.0'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # Bitcoin RPC Proxy for Java Microservices
+  bitcoin-rpc-proxy:
+    image: nginx:alpine
+    container_name: bitcoin-rpc-proxy
+    restart: unless-stopped
+    ports:
+      - "8081:8080"  # HTTP RPC proxy
+    volumes:
+      - ./bitcoin-rpc-nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - bitcoin-core
+    networks:
+      - defi-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+
+  # Bitcoin Metrics Exporter for Monitoring
+  bitcoin-exporter:
+    image: prom/node-exporter:latest
+    container_name: bitcoin-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - defi-network
+
+networks:
+  defi-network:
+    external: true
+    name: javamicrodefi_default
+
+volumes:
+  bitcoin_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/bitcoin/data

@@ -1,0 +1,380 @@
+# Linea Microservice - Optimized Database Configuration
+# Hybrid multi-database architecture for maximum performance
+
+server:
+  port: 8008
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: linea-microservice
+  
+  # MongoDB Configuration (Primary Database)
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/linea_blockchain
+      database: linea_blockchain
+      auto-index-creation: true
+      repositories:
+        enabled: true
+      gridfs:
+        database: linea_files
+  
+  # TimescaleDB Configuration (Time-Series Database)
+  datasource:
+    primary:
+      url: jdbc:postgresql://localhost:5432/linea_metrics
+      username: linea_user
+      password: linea_password
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 20
+        minimum-idle: 5
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+  
+  # Redis Configuration (Cache & Real-time)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+        cluster:
+          refresh:
+            adaptive: true
+            period: 30s
+  
+  # JPA Configuration for TimescaleDB
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+        connection:
+          provider_disables_autocommit: true
+  
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000
+      cache-null-values: false
+    cache-names:
+      - linea-blocks
+      - linea-transactions
+      - linea-accounts
+      - linea-metrics
+      - linea-defi-protocols
+
+# Linea Configuration
+linea:
+  # RPC Configuration
+  rpc-url: https://dry-special-card.linea-mainnet.quiknode.pro/your_quicknode_linea_key_here/
+  wss-url: wss://dry-special-card.linea-mainnet.quiknode.pro/your_quicknode_linea_key_here/
+  explorer-url: https://lineascan.build
+  chain-id: "59144"
+  network-name: linea
+  block-time: 2000
+  
+  # Database Configuration
+  mongodb:
+    database: linea_blockchain
+    collections:
+      blocks: linea_blocks
+      transactions: linea_transactions
+      accounts: linea_accounts
+      contracts: linea_contracts
+      tokens: linea_tokens
+      events: linea_events
+      defi-protocols: linea_defi_protocols
+      bridge-transactions: linea_bridge_transactions
+  
+  timescaledb:
+    database: linea_metrics
+    tables:
+      network-metrics: linea_network_metrics
+      block-analytics: linea_block_analytics
+      defi-metrics: linea_defi_metrics
+      token-metrics: linea_token_metrics
+      bridge-metrics: linea_bridge_metrics
+  
+  redis:
+    database: 0
+    keys:
+      latest-block: "linea:latest_block"
+      rate-limits: "linea:rate_limit"
+      sessions: "linea:session"
+      real-time-metrics: "linea:metrics"
+      top-tokens: "linea:top_tokens"
+  
+  # Collection Intervals (in milliseconds)
+  block-collection-interval: 2000
+  transaction-collection-interval: 1000
+  account-collection-interval: 5000
+  contract-collection-interval: 10000
+  token-collection-interval: 15000
+  defi-collection-interval: 30000
+  
+  # Worker Configuration
+  max-concurrent-workers: 10
+  max-concurrent-requests: 100
+  
+  # Rate Limiting
+  rate-limit-per-second: 100
+  wss-rate-limit-per-second: 50
+  
+  # Timeouts
+  request-timeout-seconds: 30
+  connection-timeout: 30
+  response-timeout: 30
+  
+  # Retry Configuration
+  retry-attempts: 3
+  retry-delay-seconds: 5
+  
+  # Archive Collection Settings
+  archive-batch-size: 1000
+  archive-concurrent-workers: 10
+  archive-max-retries: 3
+  archive-retry-delay: 5000
+  archive-mode: full
+  archive-start-block: 0
+  
+  # Data Validation
+  enable-data-validation: true
+  max-block-gap: 10
+  min-block-size: 1000
+  max-block-size: 30000000
+  enable-quality-checks: true
+  min-transaction-count: 1
+  max-transaction-count: 10000
+  
+  # Monitoring and Metrics
+  enable-real-time-monitoring: true
+  enable-historical-data: true
+  enable-defi-metrics: true
+  enable-bridge-metrics: true
+  enable-token-metrics: true
+  enable-contract-metrics: true
+  
+  # Backup Settings
+  enable-backup: true
+  backup-interval-hours: 6
+  backup-retention-days: 30
+  backup-path: /mnt/sata18tb/linea_backups/
+  compress-archive-data: true
+  archive-compression-level: 6
+  
+  # Known Contracts
+  bridge-contract: "0xA0b86a33E6441E0a4bFc0B4d5F3F3E5A4F3F3F3F"
+  message-service: "0xd19bae9c65bde34f26c2ee8f2f3f3e5a4f3f3f3f"
+  defi-protocols:
+    - "0x794a61358D6845594F94dc1DB02A252b5b4814aD"  # AAVE
+    - "0x1F98431c8aD98523631AE4a59f267346ea31F984"  # Uniswap V3
+    - "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506"  # SushiSwap
+    - "0x7f90122BF0700F9E7e1F688fe926940E8839F353"  # Curve
+  bridge-contracts:
+    - "0xA0b86a33E6441E0a4bFc0B4d5F3F3E5A4F3F3F3F"
+    - "0xd19bae9c65bde34f26c2ee8f2f3f3e5a4f3f3f3f"
+  
+  # Token Configuration
+  native-token: ETH
+  wrapped-token: WETH
+  
+  # Logging Configuration
+  log-level: INFO
+  log-file: /mnt/sata18tb/logs/linea_collector.log
+  log-retention-days: 30
+  
+  # API Configuration
+  api-host: 0.0.0.0
+  api-port: 8008
+  node-env: production
+  working-dir: /mnt/sata18tb
+
+# MongoDB Configuration
+mongodb:
+  connection:
+    max-pool-size: 100
+    min-pool-size: 10
+    max-wait-time: 30000
+    max-connection-idle-time: 600000
+    max-connection-life-time: 1800000
+  write-concern: majority
+  read-preference: primary
+  retry-writes: true
+  retry-reads: true
+
+# TimescaleDB Configuration
+timescaledb:
+  connection:
+    max-pool-size: 20
+    min-pool-size: 5
+    connection-timeout: 30000
+    idle-timeout: 600000
+    max-lifetime: 1800000
+  compression:
+    enabled: true
+    policy-interval: 7 days
+  continuous-aggregates:
+    enabled: true
+    refresh-interval: 1 hour
+  hypertables:
+    - linea_network_metrics
+    - linea_block_analytics
+    - linea_defi_metrics
+    - linea_token_metrics
+    - linea_bridge_metrics
+
+# Redis Configuration
+redis:
+  connection:
+    max-total: 100
+    max-idle: 20
+    min-idle: 5
+    max-wait-millis: 3000
+  timeout: 2000
+  jedis:
+    pool:
+      max-active: 20
+      max-idle: 10
+      min-idle: 5
+  cluster:
+    enabled: false
+    nodes: []
+  sentinel:
+    enabled: false
+    master: ""
+    nodes: []
+
+# Management and Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,configprops,mongodb,redis
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: linea-microservice
+      environment: production
+      database: hybrid
+
+# Logging Configuration
+logging:
+  level:
+    com.defimon.linea: INFO
+    org.springframework.data.mongodb: INFO
+    org.springframework.data.redis: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /mnt/sata18tb/logs/linea_collector.log
+    max-size: 100MB
+    max-history: 30
+    total-size-cap: 1GB
+
+# API Documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    display-request-duration: true
+    display-operation-id: true
+    default-models-expand-depth: 3
+    default-model-expand-depth: 3
+    doc-expansion: none
+    show-extensions: true
+    show-common-extensions: true
+
+# Java 21 Configuration
+java:
+  version: 21
+  virtual-threads:
+    enabled: true
+    parallelism: 20
+  preview:
+    enabled: true
+
+# Performance Configuration
+performance:
+  virtual-threads:
+    enabled: true
+    parallelism: 20
+  async:
+    core-pool-size: 20
+    max-pool-size: 100
+    queue-capacity: 1000
+  webflux:
+    max-connections: 1000
+    max-connections-per-route: 100
+    connection-timeout: 30s
+    read-timeout: 30s
+    write-timeout: 30s
+  mongodb:
+    batch-size: 1000
+    write-concern: majority
+    read-preference: primary
+  timescaledb:
+    batch-size: 500
+    compression: true
+  redis:
+    pipeline-size: 100
+    connection-pool: 20
+
+# Security Configuration
+security:
+  cors:
+    allowed-origins: "*"
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+  rate-limiting:
+    enabled: true
+    requests-per-minute: 1000
+    burst-capacity: 100
+  mongodb:
+    authentication:
+      enabled: false
+    ssl:
+      enabled: false
+  timescaledb:
+    ssl:
+      enabled: false
+  redis:
+    ssl:
+      enabled: false

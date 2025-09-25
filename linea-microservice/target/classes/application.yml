@@ -1,0 +1,264 @@
+# Linea Microservice Configuration
+# This configuration file contains all settings for the Linea blockchain data collection microservice
+
+server:
+  port: 8008
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: linea-microservice
+  
+  # Database Configuration
+  datasource:
+    url: jdbc:sqlite:/mnt/sata18tb/linea_data.db
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.SQLiteDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+  
+  # Cache Configuration
+  cache:
+    type: simple
+    cache-names:
+      - linea-blocks
+      - linea-transactions
+      - linea-accounts
+      - linea-metrics
+  
+  # Redis Configuration (optional)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+
+# Linea Configuration
+linea:
+  # RPC Configuration
+  rpc-url: https://dry-special-card.linea-mainnet.quiknode.pro/your_quicknode_linea_key_here/
+  wss-url: wss://dry-special-card.linea-mainnet.quiknode.pro/your_quicknode_linea_key_here/
+  explorer-url: https://lineascan.build
+  chain-id: "59144"
+  network-name: linea
+  block-time: 2000
+  
+  # Database Configuration
+  database-path: /mnt/sata18tb/linea_data.db
+  archive-database-path: /mnt/sata18tb/linea_archive_data.db
+  database-url: jdbc:sqlite:/mnt/sata18tb/linea_data.db
+  archive-database-url: jdbc:sqlite:/mnt/sata18tb/linea_archive_data.db
+  
+  # Collection Intervals (in milliseconds)
+  block-collection-interval: 2000
+  transaction-collection-interval: 1000
+  account-collection-interval: 5000
+  contract-collection-interval: 10000
+  token-collection-interval: 15000
+  defi-collection-interval: 30000
+  
+  # Worker Configuration
+  max-concurrent-workers: 10
+  max-concurrent-requests: 100
+  
+  # Rate Limiting
+  rate-limit-per-second: 100
+  wss-rate-limit-per-second: 50
+  
+  # Timeouts
+  request-timeout-seconds: 30
+  connection-timeout: 30
+  response-timeout: 30
+  
+  # Retry Configuration
+  retry-attempts: 3
+  retry-delay-seconds: 5
+  
+  # Archive Collection Settings
+  archive-batch-size: 1000
+  archive-concurrent-workers: 10
+  archive-max-retries: 3
+  archive-retry-delay: 5000
+  archive-mode: full
+  archive-start-block: 0
+  
+  # Data Validation
+  enable-data-validation: true
+  max-block-gap: 10
+  min-block-size: 1000
+  max-block-size: 30000000
+  enable-quality-checks: true
+  min-transaction-count: 1
+  max-transaction-count: 10000
+  
+  # Monitoring and Metrics
+  enable-real-time-monitoring: true
+  enable-historical-data: true
+  enable-defi-metrics: true
+  enable-bridge-metrics: true
+  enable-token-metrics: true
+  enable-contract-metrics: true
+  
+  # Backup Settings
+  enable-backup: true
+  backup-interval-hours: 6
+  backup-retention-days: 30
+  backup-path: /mnt/sata18tb/linea_backups/
+  compress-archive-data: true
+  archive-compression-level: 6
+  
+  # Known Contracts
+  bridge-contract: "0xA0b86a33E6441E0a4bFc0B4d5F3F3E5A4F3F3F3F"
+  message-service: "0xd19bae9c65bde34f26c2ee8f2f3f3e5a4f3f3f3f"
+  defi-protocols:
+    - "0x794a61358D6845594F94dc1DB02A252b5b4814aD"  # AAVE
+    - "0x1F98431c8aD98523631AE4a59f267346ea31F984"  # Uniswap V3
+    - "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506"  # SushiSwap
+    - "0x7f90122BF0700F9E7e1F688fe926940E8839F353"  # Curve
+  bridge-contracts:
+    - "0xA0b86a33E6441E0a4bFc0B4d5F3F3E5A4F3F3F3F"
+    - "0xd19bae9c65bde34f26c2ee8f2f3f3e5a4f3f3f3f"
+  
+  # Token Configuration
+  native-token: ETH
+  wrapped-token: WETH
+  
+  # Logging Configuration
+  log-level: INFO
+  log-file: /mnt/sata18tb/logs/linea_collector.log
+  log-retention-days: 30
+  
+  # API Configuration
+  api-host: 0.0.0.0
+  api-port: 8008
+  node-env: production
+  working-dir: /mnt/sata18tb
+
+# Management and Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env,configprops
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: linea-microservice
+      environment: production
+
+# Logging Configuration
+logging:
+  level:
+    com.defimon.linea: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /mnt/sata18tb/logs/linea_collector.log
+    max-size: 100MB
+    max-history: 30
+    total-size-cap: 1GB
+
+# API Documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    display-request-duration: true
+    display-operation-id: true
+    default-models-expand-depth: 3
+    default-model-expand-depth: 3
+    doc-expansion: none
+    show-extensions: true
+    show-common-extensions: true
+
+# Java 21 Configuration
+java:
+  version: 21
+  virtual-threads:
+    enabled: true
+    parallelism: 20
+  preview:
+    enabled: true
+
+# Linea Network Configuration
+linea-network:
+  name: Linea Mainnet
+  chain-id: 59144
+  block-time: 2s
+  gas-limit: 30000000
+  explorer: https://lineascan.build
+  rpc-endpoints:
+    primary: https://dry-special-card.linea-mainnet.quiknode.pro/your_quicknode_linea_key_here/
+    backup: https://rpc.linea.build
+  wss-endpoints:
+    primary: wss://dry-special-card.linea-mainnet.quiknode.pro/your_quicknode_linea_key_here/
+    backup: wss://rpc.linea.build
+
+# Performance Configuration
+performance:
+  virtual-threads:
+    enabled: true
+    parallelism: 20
+  async:
+    core-pool-size: 20
+    max-pool-size: 100
+    queue-capacity: 1000
+  webflux:
+    max-connections: 1000
+    max-connections-per-route: 100
+    connection-timeout: 30s
+    read-timeout: 30s
+    write-timeout: 30s
+
+# Security Configuration
+security:
+  cors:
+    allowed-origins: "*"
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+  rate-limiting:
+    enabled: true
+    requests-per-minute: 1000
+    burst-capacity: 100

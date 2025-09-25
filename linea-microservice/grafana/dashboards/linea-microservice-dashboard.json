@@ -1,0 +1,445 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Linea Microservice - Blockchain Data Collection",
+    "tags": ["linea", "blockchain", "microservice", "defimon"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "5s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Block Collection Performance",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(linea_blocks_collected_total[5m])",
+            "legendFormat": "Blocks/sec"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 1},
+                {"color": "green", "value": 5}
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Transaction Collection Performance",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(linea_transactions_collected_total[5m])",
+            "legendFormat": "Transactions/sec"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 10},
+                {"color": "green", "value": 50}
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Account Collection Performance",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(linea_accounts_collected_total[5m])",
+            "legendFormat": "Accounts/sec"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 5},
+                {"color": "green", "value": 20}
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "Error Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(linea_rpc_errors_total[5m]) + rate(linea_database_errors_total[5m]) + rate(linea_worker_errors_total[5m])",
+            "legendFormat": "Errors/sec"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 1},
+                {"color": "red", "value": 5}
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0}
+      },
+      {
+        "id": 5,
+        "title": "Collection Performance Over Time",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(linea_blocks_collected_total[5m])",
+            "legendFormat": "Blocks/sec"
+          },
+          {
+            "expr": "rate(linea_transactions_collected_total[5m])",
+            "legendFormat": "Transactions/sec"
+          },
+          {
+            "expr": "rate(linea_accounts_collected_total[5m])",
+            "legendFormat": "Accounts/sec"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 6,
+        "title": "Error Rate Over Time",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(linea_rpc_errors_total[5m])",
+            "legendFormat": "RPC Errors/sec"
+          },
+          {
+            "expr": "rate(linea_database_errors_total[5m])",
+            "legendFormat": "Database Errors/sec"
+          },
+          {
+            "expr": "rate(linea_worker_errors_total[5m])",
+            "legendFormat": "Worker Errors/sec"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 7,
+        "title": "Collection Time Performance",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "linea_block_collection_time_avg",
+            "legendFormat": "Block Collection Time (ms)"
+          },
+          {
+            "expr": "linea_transaction_collection_time_avg",
+            "legendFormat": "Transaction Collection Time (ms)"
+          },
+          {
+            "expr": "linea_account_collection_time_avg",
+            "legendFormat": "Account Collection Time (ms)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "ms"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 8,
+        "title": "RPC and Database Performance",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "linea_rpc_request_time_avg",
+            "legendFormat": "RPC Request Time (ms)"
+          },
+          {
+            "expr": "linea_database_write_time_avg",
+            "legendFormat": "Database Write Time (ms)"
+          },
+          {
+            "expr": "linea_database_read_time_avg",
+            "legendFormat": "Database Read Time (ms)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "ms"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 9,
+        "title": "Network Metrics",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "linea_network_tps_current",
+            "legendFormat": "Network TPS"
+          },
+          {
+            "expr": "linea_network_gas_utilization_percentage",
+            "legendFormat": "Gas Utilization (%)"
+          },
+          {
+            "expr": "linea_network_gas_price_gwei",
+            "legendFormat": "Gas Price (Gwei)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 10,
+        "title": "Sync Progress",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "linea_sync_progress_percentage",
+            "legendFormat": "Sync Progress (%)"
+          },
+          {
+            "expr": "linea_network_latest_block_number",
+            "legendFormat": "Latest Block Number"
+          },
+          {
+            "expr": "linea_network_current_block_number",
+            "legendFormat": "Current Block Number"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      },
+      {
+        "id": 11,
+        "title": "System Resource Usage",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "linea_system_memory_usage_percentage",
+            "legendFormat": "Memory Usage (%)"
+          },
+          {
+            "expr": "linea_system_cpu_usage_percentage",
+            "legendFormat": "CPU Usage (%)"
+          },
+          {
+            "expr": "linea_system_disk_usage_percentage",
+            "legendFormat": "Disk Usage (%)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "percent"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32}
+      },
+      {
+        "id": 12,
+        "title": "JVM Metrics",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "linea_jvm_memory_usage_percentage",
+            "legendFormat": "JVM Memory Usage (%)"
+          },
+          {
+            "expr": "linea_jvm_gc_time_seconds",
+            "legendFormat": "GC Time (s)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32}
+      },
+      {
+        "id": 13,
+        "title": "Database Connections",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "linea_mongodb_connections_active",
+            "legendFormat": "MongoDB Connections"
+          },
+          {
+            "expr": "linea_timescaledb_connections_active",
+            "legendFormat": "TimescaleDB Connections"
+          },
+          {
+            "expr": "linea_redis_connections_active",
+            "legendFormat": "Redis Connections"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 40}
+      },
+      {
+        "id": 14,
+        "title": "Worker Performance",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "linea_workers_active_count",
+            "legendFormat": "Active Workers"
+          },
+          {
+            "expr": "linea_workers_queue_size",
+            "legendFormat": "Queue Size"
+          },
+          {
+            "expr": "linea_workers_memory_usage_percentage",
+            "legendFormat": "Worker Memory Usage (%)"
+          },
+          {
+            "expr": "linea_workers_cpu_usage_percentage",
+            "legendFormat": "Worker CPU Usage (%)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 40}
+      },
+      {
+        "id": 15,
+        "title": "Database Performance",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "linea_database_size_bytes",
+            "legendFormat": "Database Size (bytes)"
+          },
+          {
+            "expr": "linea_cache_hit_rate_percentage",
+            "legendFormat": "Cache Hit Rate (%)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 48}
+      }
+    ],
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Linea Microservice Events",
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "linea_rpc_errors_total > 10",
+          "iconColor": "red",
+          "titleFormat": "High Error Rate",
+          "textFormat": "RPC errors detected: {{value}}"
+        }
+      ]
+    },
+    "links": []
+  }
+}

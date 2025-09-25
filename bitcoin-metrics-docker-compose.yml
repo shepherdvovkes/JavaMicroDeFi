@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  bitcoin-metrics:
+    build:
+      context: ./bitcoin-metrics-service
+      dockerfile: Dockerfile
+    container_name: bitcoin-metrics-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - defi-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/bitcoin-metrics/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+networks:
+  defi-network:
+    external: true
+    name: javamicrodefi_default

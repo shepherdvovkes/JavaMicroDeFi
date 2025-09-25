@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  linea-microservice:
+    build: .
+    container_name: linea-microservice
+    ports:
+      - "8008:8008"
+    volumes:
+      - /mnt/sata18tb:/mnt/sata18tb
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - JAVA_OPTS=--enable-preview -XX:+UseZGC -XX:+UnlockExperimentalVMOptions -XX:+UseTransparentHugePages -Xmx2g -Xms1g
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8008/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - linea-network
+
+networks:
+  linea-network:
+    driver: bridge
